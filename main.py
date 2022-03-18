@@ -33,7 +33,7 @@ async def save_dialogs(id,client):
     links = {'dialogID': ['links','links','links']}
     mails = {'dialogID': ['mails','mails']}
     dialogs_get = await client.get_dialogs()
-    for index,di in tqdm(enumerate(dialogs_get), desc ="Geting dialogs",unit=' dialog',ascii='█'):
+    for index,di in tqdm(enumerate(dialogs_get), desc ="Получение диалогов",unit='диалог',ascii='█'):
         messages = await client.get_messages(di)
         link = [i[0].replace('\n','') for i in re.findall(r'((http|https|tg|ftp|scp|sftp|ssh|rdp|pgsql|smtp|mysqli|redis|amqp)://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+)',str(messages))]
         mail = [i[0].replace('\n','') for i in re.findall(r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)",str(messages))]
@@ -59,8 +59,8 @@ async def main(tdataFolder):
     await client.download_profile_photo('me',id_user+'/user_photo.jpg', download_big=True)
     print(json.dumps(userInfo,indent=4,ensure_ascii=False),file=codecs.open(id_user+'/user.json','w','utf8'))
     di = str(len(await client.get_dialogs()))
-    if input(C.GREEN+f'Find {di} dialogs.\nSave? (Y-yes;other-No): '+C.BLUE).lower() == 'y':await save_dialogs(id_user,client)
-    print(C.GREEN+'Result save in floder - '+C.MAGENTA+ id_user)
+    if input(C.GREEN+f'Найдено {di} диалогов.\nХотите сохранить? (Y-да;другое-нет): '+C.BLUE).lower() == 'y':await save_dialogs(id_user,client)
+    print(C.GREEN+'Результат в папке - '+C.MAGENTA+ id_user)
     await client.disconnect()
 try:
     path  = easygui.diropenbox(msg='Укажите папку с "tdata"',title='TDeskop to TData')
