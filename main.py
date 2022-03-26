@@ -10,7 +10,7 @@ from datetime import datetime as dt
 import easygui
 from colorama import Fore, init
 from opentele.api import UseCurrentSession
-from telethon import events
+from telethon import events,TelegramClient
 from opentele.td import TDesktop
 from tqdm import tqdm
 
@@ -44,21 +44,34 @@ async def save_dialogs(id,client):
     if links != {'dialogID': ['links','links','links']}: print(json.dumps(links,indent=4,ensure_ascii=False),file=codecs.open(id+'/dialogs/links.json','w','utf8'))
     if mails != {'dialogID': ['mails','mails']}: print(json.dumps(mails,indent=4,ensure_ascii=False),file=codecs.open(id+'/dialogs/mails.json','w','utf8'))
 async def get_sms(phone,client):
-    print(C.GREEN+'Login telegram with phone:',C.MAGENTA+phone)
+    print(C.GREEN+'Войдите в телеграм с помощью номера:',C.MAGENTA+phone)
     @client.on(events.NewMessage(chats=(777000)))
     async def normal_handler(event):
         print(C.RESET+event.message.to_dict()['message'])
     await client.run_until_disconnected()
 
-async def main(tdataFolder):
-    try:tdesk = TDesktop(tdataFolder);assert tdesk.isLoaded()
-    except:raise Exception('"tdata" no valid')
-    id_user = str(tdesk.mainAccount.UserId)
-    if not os.path.exists(id_user):os.mkdir(id_user)
-    client = await tdesk.ToTelethon(session=id_user+'/'+id_user+"-ttot.session", flag=UseCurrentSession)    
-    await client.connect()
+async def main(tdataFolder,type):
+
+    if type:
+        try:tdesk = TDesktop(tdataFolder);assert tdesk.isLoaded()
+        except:raise Exception('"tdata" no valid')
+        id_user = str(tdesk.mainAccount.UserId)
+        session = id_user+'/'+id_user+"-ttot.session"
+        if not os.path.exists(id_user):os.mkdir(id_user)
+        client = await tdesk.ToTelethon(session=session, flag=UseCurrentSession)   
+        await client.connect()
+    else:
+        session = tdataFolder
+        if '.session' not in session[8:]:raise Exception('.session no valid')
+        api_id = input(C.BLUE+'Ведите api_id: '+C.MAGENTA)
+        api_hash  = input(C.BLUE+'Ведите api_hash: '+C.MAGENTA)
+        client = TelegramClient(session, api_id,api_hash)   
+        await client.start(phone=lambda x: input(C.BLUE+'Введите номер телефона: '+C.MAGENTA),code_callback=lambda x: input(C.BLUE+'Введите отправленный код: '+C.MAGENTA),password=lambda x: input(C.BLUE+'Введите код 2fa: '+C.MAGENTA))
     user = await client.get_me()
     userInfo = user.to_dict()
+    id_user = str(userInfo['id'])
+    if not os.path.exists(id_user):os.mkdir(id_user)
+    open(id_user+'/'+id_user+"-ttot.session",'wb').write(open(tdataFolder,'rb').read())
     del userInfo['photo']
     userInfo['status']['was_online'] = dt.strftime(userInfo['status']['was_online'],'%y-%m-%d %H:%M:%S')
     userInfo['api_id'] = client.api_id
@@ -70,9 +83,18 @@ async def main(tdataFolder):
     if input(C.GREEN+f'Хотите получить смс чтобы войти через обычный телеграмм? (После получения нажмите ctrl+c) (Y-да;другое-нет): '+C.BLUE).lower() == 'y':await get_sms(userInfo['phone'],client)
     print(C.GREEN+'Результат в папке - '+C.MAGENTA+ id_user)
     await client.disconnect()
+
+   
 try:
-    path  = easygui.diropenbox(msg='Укажите папку с "tdata"',title='TDeskop to TData')
-    asyncio.run(main(path))
+    type = input(f'{C.BLUE}Выберите тип работы: {C.MAGENTA} (1-конвертация, 2-зайти по .session){C.RED}: ')
+    if type == '1':
+        path  = easygui.diropenbox(msg='Укажите папку с "tdata"',title='TDeskop to TData')
+        asyncio.run(main(path,True))
+    elif type == '2':
+        path  = easygui.fileopenbox(msg='Выберите файл .session',title='TDeskop to TData')
+        asyncio.run(main(path,False))
+    else:
+        print(C.RED+"Я еще не зна такой тип.")
 except KeyboardInterrupt:sys.exit(0)
 except Exception as e:print(C.RED+str(e))
 try:input(C.LIGHTBLACK_EX+'Press enter to exit.')
