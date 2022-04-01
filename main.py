@@ -63,10 +63,10 @@ async def main(tdataFolder,type):
     else:
         session = tdataFolder
         if '.session' not in session[8:]:raise Exception('.session no valid')
-        api_id = input(C.BLUE+'Ведите api_id: '+C.MAGENTA)
-        api_hash  = input(C.BLUE+'Ведите api_hash: '+C.MAGENTA)
+        api_id = 8
+        api_hash  = 'e313131313131'
         client = TelegramClient(session, api_id,api_hash)   
-        await client.start(phone=lambda x: input(C.BLUE+'Введите номер телефона: '+C.MAGENTA),code_callback=lambda x: input(C.BLUE+'Введите отправленный код: '+C.MAGENTA),password=lambda x: input(C.BLUE+'Введите код 2fa: '+C.MAGENTA))
+        await client.start(phone=lambda: input(C.BLUE+'Введите номер телефона для получения смс в тг: '+C.MAGENTA),code_callback=lambda: input(C.BLUE+'Введите отправленный код: '+C.MAGENTA),password=lambda x: input(C.BLUE+'Введите код 2fa: '+C.MAGENTA))
     user = await client.get_me()
     userInfo = user.to_dict()
     id_user = str(userInfo['id'])
