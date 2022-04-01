@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import asyncio
 import codecs
+from secrets import token_hex
 import json
 import os
 import re
@@ -66,18 +67,27 @@ async def main(tdataFolder,type):
         api_id = 8
         api_hash  = 'e313131313131'
         client = TelegramClient(session, api_id,api_hash)   
-        await client.start(phone=lambda: input(C.BLUE+'Введите номер телефона для получения смс в тг: '+C.MAGENTA),code_callback=lambda: input(C.BLUE+'Введите отправленный код: '+C.MAGENTA),password=lambda x: input(C.BLUE+'Введите код 2fa: '+C.MAGENTA))
+        await client.connect()
+        check = client.is_connected()
+        if not check:raise Exception('.session no valid')
     user = await client.get_me()
-    userInfo = user.to_dict()
-    id_user = str(userInfo['id'])
-    if not os.path.exists(id_user):os.mkdir(id_user)
-    open(id_user+'/'+id_user+"-ttot.session",'wb').write(open(tdataFolder,'rb').read())
-    del userInfo['photo']
-    userInfo['status']['was_online'] = dt.strftime(userInfo['status']['was_online'],'%y-%m-%d %H:%M:%S')
-    userInfo['api_id'] = client.api_id
-    userInfo['api_hash'] = client.api_hash
-    await client.download_profile_photo('me',id_user+'/user_photo.jpg', download_big=True)
-    print(json.dumps(userInfo,indent=4,ensure_ascii=False),file=codecs.open(id_user+'/user.json','w','utf8'))
+    if user:
+        userInfo = user.to_dict()
+        id_user = str(userInfo['id'])
+        if not os.path.exists(id_user):os.mkdir(id_user)
+        open(id_user+'/'+id_user+"-ttot.session",'wb').write(open(tdataFolder,'rb').read())
+        del userInfo['photo']
+        userInfo['status']['was_online'] = dt.strftime(userInfo['status']['was_online'],'%y-%m-%d %H:%M:%S')
+        userInfo['api_id'] = client.api_id
+        userInfo['api_hash'] = client.api_hash
+        await client.download_profile_photo('me',id_user+'/user_photo.jpg', download_big=True)
+        print(json.dumps(userInfo,indent=4,ensure_ascii=False),file=codecs.open(id_user+'/user.json','w','utf8'))
+    else:
+        get_entity = await client.get_entity('me')
+        if get_entity:
+            id_user =str( get_entity.id)
+        else:
+            id_user = token_hex(6)
     di = str(len(await client.get_dialogs()))
     if input(C.GREEN+f'Найдено {di} диалогов.\nХотите сохранить? (Y-да;другое-нет): '+C.BLUE).lower() == 'y':await save_dialogs(id_user,client)
     if input(C.GREEN+f'Хотите получить смс чтобы войти через обычный телеграмм? (После получения нажмите ctrl+c) (Y-да;другое-нет): '+C.BLUE).lower() == 'y':await get_sms(userInfo['phone'],client)
